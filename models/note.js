@@ -5,7 +5,6 @@ const { set, connect, Schema, model } = pkg
 
 set("strictQuery", false)
 
-console.log("why empty", process.env.MONGODB_URI)
 const url = process.env.MONGODB_URI
 console.log("connecting to", url)
 
@@ -16,7 +15,11 @@ connect(url).then(_result => {
 })
 
 const schema = new Schema({
-  content: String,
+  content: {
+    type: String,
+    minLength: 5,
+    required: true,
+  },
   important: Boolean,
 })
 

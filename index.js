@@ -14,39 +14,32 @@ app.get("/", (_req, res) => {
 app.get("/api/notes", (_req, res) => {
   Note.find({}).then((notes) => {
     res.json(notes)
+  }).catch(error => {
+    console.log(error)
+    res.status(500).end()
   })
 })
 
-app.get("/api/notes/:id", (req, res) => {
+app.get("/api/notes/:id", (req, res, next) => {
   Note.findById(req.params.id).then(note => {
-    // const note = notes.find(note => note.id === id)
-    // if (note) {
-    res.json(note)
-    // } else {
-    //   res
-    //     .status(404)
-    //     .send(`Notes with id ${id} not found`)
-    //     .end()
-    // }
+    if (note) {
+      res.json(note)
+    } else {
+      res.status(404).end()
+    }
+  }).catch(error => {
+    console.log("HERE")
+    return next(error)
   })
 })
 
-app.delete("/api/notes/:id", (req, res) => {
-  Note.findById(req.params.id).then(note => {
-    note.deleteOne()
-    res.status(204).end()
-  })
-  // const id = Number(req.params.id)
-  // notes = notes.filter(note => note.id !== id)
-  // res.status(204).end()
+app.delete("/api/notes/:id", (req, res, next) => {
+  Note.findByIdAndRemove(req.params.id).then(result => {
+    res.status(204).end() // 204 ok, no content
+  }).catch(error => next(error))
 })
 
-// const generateId = () => {
-//   const maxId = notes.reduce((max, n) => n.id > max ? n.id : max, Number.MIN_VALUE)
-//   return maxId + 1
-// }
-
-app.post("/api/notes", (req, res) => {
+app.post("/api/notes", (req, res, next) => {
   const data = req.body
   if (!data.content) {
     return res.status(400).json({
@@ -56,34 +49,43 @@ app.post("/api/notes", (req, res) => {
   const note = new Note({
     content: data.content,
     important: data.important || false,
-    // id: generateId(),
   })
   note.save().then((note) => {
     res.json(note)
-  })
-  // notes.push(data)
+  }).catch(error => next(error))
 })
 
-app.put("/api/notes/:id", (req, res) => {
-  const data = req.body
-  Note.findById(req.params.id).then(note => {
-    note.content = data.content
-    note.important = data.important
-    note.save().then(note => {
-      res.json(note)
-    })
-  })
-  // const note = req.body
-  // if (!notes.find(p => p.id == note.id)) {
-  //   res.status(400) // person does not exist
-  // }
-  //
-  // notes = notes
-  //   .filter(p => p.id != note.id)
-  //   .concat(note)
-  //
-  // res.json(note)
+app.put("/api/notes/:id", (req, res, next) => {
+  const note = {
+    content: req.body.content,
+    important: req.body.important,
+  }
+  // the {new: true} causes updatedNote to have the persisted changes
+  const options = { new: true, runValidators: true, context: "query" }
+  Note.findByIdAndUpdate(req.params.id, note, options).then(updatedNote => {
+    res.json(updatedNote)
+  }).catch(error => next(error))
 })
+
+const unknownEndpoint = (_req, res) => {
+  res.status(404).send({ error: "unknownEndpoint" })
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (error, _req, res, next) => {
+  if (error.name === "CastError") {
+    return res.status(400).send({ error: "malformatted id" })
+  }
+
+  if (error.name === "ValidationError") {
+    return res.status(400).json({ error: error.message })
+  }
+
+  next(error)
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3002
 app.listen(PORT, () => {

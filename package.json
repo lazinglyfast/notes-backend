@@ -9,7 +9,8 @@
     "start": "node index.js",
     "build-frontend": "rm -rf build ||: && mkdir build && cd ../notes-frontend && npm run build && cp -rp dist/* ../notes-backend/build && cd ../notes-backend",
     "deploy-to-fly": "npm run build-frontend && fly deploy",
-    "deploy-to-render": "npm run build-frontend && git add . && git commit -m frontend-build && git push"
+    "deploy-to-render": "npm run build-frontend && git add . && git commit -m frontend-build && git push",
+    "deploy": "npm run deploy-to-render && npm run deploy-to-fly"
   },
   "dependencies": {
     "cors": "^2.8.5",
