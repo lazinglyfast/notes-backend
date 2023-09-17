@@ -1,8 +1,11 @@
+import dotenv from "dotenv"
+dotenv.config() // it didn't work when called from index.js, do imports get reordered?
 import pkg from 'mongoose';
 const { set, connect, Schema, model } = pkg
 
 set("strictQuery", false)
 
+console.log("why empty", process.env.MONGODB_URI)
 const url = process.env.MONGODB_URI
 console.log("connecting to", url)
 
