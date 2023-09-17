@@ -5,7 +5,7 @@ import Note from "./models/note.js"
 const app = express()
 app.use(cors())
 app.use(json())
-app.use(express.static("dist"))
+app.use(express.static("build"))
 
 app.get("/", (_request, response) => {
   response.send("<h1>Hello, World!</h1>")
